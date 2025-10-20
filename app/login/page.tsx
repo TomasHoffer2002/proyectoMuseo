@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -12,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -24,14 +23,19 @@ export default function LoginPage() {
     setError("")
     setIsLoading(true)
 
-    const success = await login(email, password)
+    const loggedInUser = await login(username, password)
 
-    if (success) {
-      router.push("/admin")
+    if (loggedInUser) {
+      // Si el login fue exitoso, se comprueba el rol
+      if (loggedInUser.rol === 'admin') {
+        router.push("/admin") // Redirigir a la página de admin
+      } else {
+        router.push("/") // Redirigir a la página principal para usuarios normales
+      }
     } else {
+      // Si loggedInUser es null, el login falló
       setError("Credenciales incorrectas. Por favor, intente nuevamente.")
     }
-
     setIsLoading(false)
   }
 
@@ -51,13 +55,13 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
+                <Label htmlFor="username">Nombre de Usuario</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="usuario@museo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="ej: javier_perez"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={isLoading}
                 />
@@ -86,18 +90,6 @@ export default function LoginPage() {
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-2">Credenciales de prueba:</p>
-              <div className="text-xs space-y-1 text-muted-foreground">
-                <p>
-                  <strong>Admin:</strong> admin@museo.com / admin123
-                </p>
-                <p>
-                  <strong>Miembro:</strong> miembro@museo.com / miembro123
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
