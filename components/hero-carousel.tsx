@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { MuseumItem } from "@/lib/mock-data"
+import { API_SERVER_URL, type MuseumItem } from "@/lib/api-client"
 
 interface HeroCarouselProps {
   items: MuseumItem[]
@@ -15,6 +15,8 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
+    if (items.length === 0) return
+
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length)
     }, 5000)
@@ -30,6 +32,15 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
     setCurrentIndex((prev) => (prev + 1) % items.length)
   }
 
+  // 4. Asegurarse de que currentItem exista antes de renderizar
+  if (items.length === 0) {
+    return (
+      <div className="relative h-[500px] md:h-[600px] w-full overflow-hidden bg-muted flex items-center justify-center">
+        <p className="text-muted-foreground">No hay ítems destacados.</p>
+      </div>
+    )
+  }
+
   const currentItem = items[currentIndex]
 
   return (
@@ -42,7 +53,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
           }`}
         >
           <Image
-            src={item.imageUrl || "/placeholder.svg"}
+            src={item.imageUrl ? `${API_SERVER_URL}${item.imageUrl}` : "/placeholder.svg"}
             alt={item.title}
             fill
             className="object-cover"

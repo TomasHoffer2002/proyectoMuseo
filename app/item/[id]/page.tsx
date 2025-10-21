@@ -2,33 +2,59 @@ import { notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { ImageGallery } from "@/components/image-gallery"
 import { ItemMetadata } from "@/components/item-metadata"
-import { CommentsSection } from "@/components/comments-section"
+// import { CommentsSection } from "@/components/comments-section" // (Comentado)
 import { ItemNavigation } from "@/components/item-navigation"
 import { Viewer3DPlaceholder } from "@/components/viewer-3d-placeholder"
-import { MUSEUM_ITEMS, MOCK_COMMENTS } from "@/lib/mock-data"
+import { 
+  API_ITEMS_URL, 
+  API_ITEM_DETAIL_URL, 
+  type MuseumItem 
+} from "@/lib/api-client"
 
-export function generateStaticParams() {
-  return MUSEUM_ITEMS.map((item) => ({
-    id: item.id,
-  }))
+async function getItem(id: string): Promise<MuseumItem | null> {
+  try {
+    const res = await fetch(`${API_ITEM_DETAIL_URL}?id=${id}`, {
+      cache: "no-store", 
+    })
+    if (!res.ok) return null
+    return res.json()
+  } catch (error) {
+    console.error("Error fetching item:", error)
+    return null
+  }
 }
 
-export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const item = MUSEUM_ITEMS.find((i) => i.id === params.id)
+async function getAllItems(): Promise<MuseumItem[]> {
+  try {
+    const res = await fetch(API_ITEMS_URL, { cache: "no-store" })
+    if (!res.ok) return []
+    return res.json()
+  } catch (error) {
+    console.error("Error fetching all items:", error)
+    return []
+  }
+}
+
+
+export default async function ItemDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
+  
+  const [item, allItems] = await Promise.all([
+    getItem(params.id),
+    getAllItems()
+  ])
 
   if (!item) {
     notFound()
   }
-
-  const itemComments = MOCK_COMMENTS.filter((c) => c.itemId === item.id)
-
+  
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <ItemNavigation currentItem={item} allItems={MUSEUM_ITEMS} />
+          <ItemNavigation currentItem={item} allItems={allItems} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -41,8 +67,6 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
             </div>
 
             <Viewer3DPlaceholder />
-
-            <CommentsSection itemId={item.id} comments={itemComments} />
           </div>
 
           <div className="space-y-6">

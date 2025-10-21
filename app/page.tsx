@@ -1,31 +1,89 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { SearchFilters } from "@/components/search-filters"
 import { GalleryGrid } from "@/components/gallery-grid"
-import { MUSEUM_ITEMS } from "@/lib/mock-data"
+import { 
+  API_ITEMS_URL, 
+  API_CATEGORIES_URL, 
+  type MuseumItem,
+  type Category
+} from "@/lib/api-client"
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [category, setCategory] = useState("all")
 
-  const featuredItems = useMemo(() => MUSEUM_ITEMS.filter((item) => item.featured), [])
+  // ESTADOS para manejar los datos de la API
+  const [allItems, setAllItems] = useState<MuseumItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // useEffect para llamar a la API
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const [itemsRes, categoriesRes] = await Promise.all([
+          fetch(API_ITEMS_URL),
+          fetch(API_CATEGORIES_URL)
+        ]);
+
+        if (!itemsRes.ok || !categoriesRes.ok) {
+          throw new Error("Error al cargar los datos de la API");
+        }
+
+        const itemsData = await itemsRes.json();
+        const categoriesData = await categoriesRes.json();
+        
+        setAllItems(itemsData);
+        setCategories(categoriesData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Un error desconocido ocurrió");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchItems()
+  }, []) // El array vacío [] asegura que esto se ejecute solo una vez
+
+  const featuredItems = useMemo(
+    () => allItems.filter((item) => item.featured),
+    [allItems] // Depende de allItems
+  )
 
   const filteredItems = useMemo(() => {
-    return MUSEUM_ITEMS.filter((item) => {
+    return allItems.filter((item) => { // Usa allItems
       const matchesSearch =
         searchQuery === "" ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
 
-      const matchesCategory = category === "all" || item.category === category
+      // Compara con 'category_value' que viene de la API
+      const matchesCategory = category === "all" || item.category_value === category 
 
       return matchesSearch && matchesCategory
     })
-  }, [searchQuery, category])
+  }, [searchQuery, category, allItems]) 
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-muted-foreground">Cargando catálogo...</p>
+      </div>
+    )
+  }
+  if (error) {
+     return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-destructive">Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,6 +105,7 @@ export default function HomePage() {
             onSearchChange={setSearchQuery}
             category={category}
             onCategoryChange={setCategory}
+            categories={categories}
           />
         </div>
 

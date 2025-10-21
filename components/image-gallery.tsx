@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { API_SERVER_URL } from "@/lib/api-client"
 
 interface ImageGalleryProps {
   images: string[]
@@ -28,7 +29,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
       <div className="space-y-4">
         <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden group">
           <Image
-            src={images[currentIndex] || "/placeholder.svg"}
+            src={images[currentIndex] ? `${API_SERVER_URL}${images[currentIndex]}` : "/placeholder.svg"}
             alt={`${title} - Imagen ${currentIndex + 1}`}
             fill
             className="object-cover"
@@ -86,7 +87,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                 }`}
               >
                 <Image
-                  src={image || "/placeholder.svg"}
+                  src={image ? `${API_SERVER_URL}${image}` : "/placeholder.svg"}
                   alt={`${title} - Miniatura ${index + 1}`}
                   fill
                   className="object-cover"
@@ -101,7 +102,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
           <div className="relative w-full h-full">
             <Image
-              src={images[currentIndex] || "/placeholder.svg"}
+              src={images[currentIndex] ? `${API_SERVER_URL}${images[currentIndex]}` : "/placeholder.svg"}
               alt={`${title} - Imagen ${currentIndex + 1}`}
               fill
               className="object-contain"

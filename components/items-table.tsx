@@ -16,26 +16,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { MuseumItem } from "@/lib/mock-data"
+import type { MuseumItem } from "@/lib/api-client"
 
 interface ItemsTableProps {
   items: MuseumItem[]
   onEdit: (item: MuseumItem) => void
-  onDelete: (id: string) => void
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  fossil: "Fósil",
-  mineral: "Mineral",
-  specimen: "Espécimen",
-  artifact: "Artefacto",
+  onDelete: (id: number) => void
 }
 
 export function ItemsTable({ items, onEdit, onDelete }: ItemsTableProps) {
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const handleDelete = () => {
-    if (deleteId) {
+    if (deleteId !== null) {
       onDelete(deleteId)
       setDeleteId(null)
     }
@@ -66,7 +59,7 @@ export function ItemsTable({ items, onEdit, onDelete }: ItemsTableProps) {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{CATEGORY_LABELS[item.category]}</Badge>
+                    <Badge variant="secondary">{item.category_label}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{item.location || "—"}</TableCell>
                   <TableCell>

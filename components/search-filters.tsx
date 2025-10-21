@@ -3,16 +3,17 @@
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CATEGORIES } from "@/lib/mock-data"
+import type { Category } from "@/lib/api-client"
 
 interface SearchFiltersProps {
   searchQuery: string
   onSearchChange: (value: string) => void
   category: string
   onCategoryChange: (value: string) => void
+  categories: Category[]
 }
 
-export function SearchFilters({ searchQuery, onSearchChange, category, onCategoryChange }: SearchFiltersProps) {
+export function SearchFilters({ searchQuery, onSearchChange, category, onCategoryChange, categories }: SearchFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="relative flex-1">
@@ -30,7 +31,8 @@ export function SearchFilters({ searchQuery, onSearchChange, category, onCategor
           <SelectValue placeholder="Categoría" />
         </SelectTrigger>
         <SelectContent>
-          {CATEGORIES.map((cat) => (
+          <SelectItem value="all">Todas las Categorías</SelectItem>
+          {categories.map((cat) => (
             <SelectItem key={cat.value} value={cat.value}>
               {cat.label}
             </SelectItem>
