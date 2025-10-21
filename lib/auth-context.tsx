@@ -4,56 +4,65 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 interface User {
   id: string
+  nombre: string
+  usuario: string
   email: string
-  name: string
-  role: "admin" | "member"
+  rol: String
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
+  login: (usuario: string, password: string) => Promise<User | null>
   logout: () => void
   isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Mock users for demonstration
-const MOCK_USERS = [
-  { id: "1", email: "admin@museo.com", password: "admin123", name: "Admin Usuario", role: "admin" as const },
-  { id: "2", email: "miembro@museo.com", password: "miembro123", name: "Miembro Museo", role: "member" as const },
-]
+const API_URL = "http://localhost:8012/apiLogin/login.php";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem("museo_user")
+    const storedUser = localStorage.getItem("museo_user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      setUser(JSON.parse(storedUser));
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication
-    const foundUser = MOCK_USERS.find((u) => u.email === email && u.password === password)
+  const login = async (usuario: string, password: string): Promise<User | null> => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, password }),
+      });
 
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser
-      setUser(userWithoutPassword)
-      localStorage.setItem("museo_user", JSON.stringify(userWithoutPassword))
-      return true
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.usuario);
+        localStorage.setItem("museo_token", data.token);
+        localStorage.setItem("museo_user", JSON.stringify(data.usuario));
+        return data.usuario;
+      } else {
+        console.error("Error de login:", data.mensaje);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error de red o al conectar con la API:", error);
+      return null;
     }
-
-    return false
   }
 
   const logout = () => {
     setUser(null)
+    localStorage.removeItem("museo_token")
     localStorage.removeItem("museo_user")
+    window.location.href = '/login';
   }
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>

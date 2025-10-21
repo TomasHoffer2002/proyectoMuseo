@@ -30,7 +30,7 @@ export function SiteHeader() {
             >
               Galería
             </Link>
-            {user?.role === "admin" && (
+            {user?.rol === "admin" && (
               <Link
                 href="/admin"
                 className={`text-sm font-medium transition-colors hover:text-primary ${
@@ -48,7 +48,7 @@ export function SiteHeader() {
             <>
               <div className="hidden sm:flex items-center gap-2 mr-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{user.name}</span>
+                <span className="text-sm text-muted-foreground">{user.nombre}</span>
               </div>
               <Button variant="ghost" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4 mr-2" />
