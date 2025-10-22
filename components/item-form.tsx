@@ -11,18 +11,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { MuseumItem } from "@/lib/mock-data"
+import type { MuseumItem, Category } from "@/lib/api-client"
 
 interface ItemFormProps {
   item?: MuseumItem
   onSubmit: (data: Partial<MuseumItem>) => void
   onCancel: () => void
+  categories: Category[]
 }
 
-export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
+export function ItemForm({ item, onSubmit, onCancel, categories }: ItemFormProps) {
   const [formData, setFormData] = useState<Partial<MuseumItem>>({
     title: "",
-    category: "fossil",
+    category_value: "fossil",
     description: "",
     longDescription: "",
     imageUrl: "",
@@ -33,19 +34,42 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
     weight: "",
     featured: false,
     tags: [],
+    images: ["", "", ""],
   })
 
   const [tagInput, setTagInput] = useState("")
 
   useEffect(() => {
     if (item) {
-      setFormData(item)
+      // Rellena el array 'images' para que siempre tenga 3 elementos
+      const itemImages = item.images || [];
+      const paddedImages = [
+        itemImages[0] || "",
+        itemImages[1] || "",
+        itemImages[2] || "",
+      ];
+      setFormData({ ...item, images: paddedImages });
     }
   }, [item])
 
+  const handleImageChange = (index: number, value: string) => {
+    setFormData(prev => {
+      // Asegura que 'images' sea un array
+      const newImages = [...(prev.images || ["", "", ""])];
+      newImages[index] = value;
+      return { ...prev, images: newImages };
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Filtra los strings vacíos del array de imágenes de la galería
+    const finalImages = (formData.images || []).filter(img => img && img.trim() !== "");
+    const dataToSend = {
+      ...formData,
+      images: finalImages,
+    }
+    onSubmit(dataToSend)
   }
 
   const addTag = () => {
@@ -86,17 +110,18 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
             <div className="space-y-2">
               <Label htmlFor="category">Categoría *</Label>
               <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value as any })}
+                value={formData.category_value}
+                onValueChange={(value) => setFormData({ ...formData, category_value: value as any })}
               >
                 <SelectTrigger id="category">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fossil">Fósil</SelectItem>
-                  <SelectItem value="mineral">Mineral</SelectItem>
-                  <SelectItem value="specimen">Espécimen</SelectItem>
-                  <SelectItem value="artifact">Artefacto</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -128,11 +153,36 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
             <Label htmlFor="imageUrl">URL de Imagen Principal *</Label>
             <Input
               id="imageUrl"
-              type="url"
+              type="text"
               value={formData.imageUrl}
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
               required
-              placeholder="https://ejemplo.com/imagen.jpg"
+              placeholder="/apiLogin/imagenes/jurassic-ammonite-fossil-spiral-shell.jpg"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Imágenes de la Galería (3)</Label>
+            <Input
+              id="image1"
+              type="text"
+              value={formData.images?.[0] ?? ""}
+              onChange={(e) => handleImageChange(0, e.target.value)}
+              placeholder="/apiLogin/imagenes/galeria-1.jpg"
+            />
+            <Input
+              id="image2"
+              type="text"
+              value={formData.images?.[1] ?? ""}
+              onChange={(e) => handleImageChange(1, e.target.value)}
+              placeholder="/apiLogin/imagenes/galeria-2.jpg (opcional)"
+            />
+            <Input
+              id="image3"
+              type="text"
+              value={formData.images?.[2] ?? ""}
+              onChange={(e) => handleImageChange(2, e.target.value)}
+              placeholder="/apiLogin/imagenes/galeria-3.jpg (opcional)"
             />
           </div>
 
@@ -141,7 +191,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <Label htmlFor="location">Ubicación</Label>
               <Input
                 id="location"
-                value={formData.location}
+                value={formData.location ?? ""}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
             </div>
@@ -150,7 +200,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <Label htmlFor="discoveryDate">Fecha de Descubrimiento</Label>
               <Input
                 id="discoveryDate"
-                value={formData.discoveryDate}
+                value={formData.discoveryDate ?? ""}
                 onChange={(e) => setFormData({ ...formData, discoveryDate: e.target.value })}
                 placeholder="2020"
               />
@@ -162,7 +212,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <Label htmlFor="period">Período</Label>
               <Input
                 id="period"
-                value={formData.period}
+                value={formData.period ?? ""}
                 onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                 placeholder="Jurásico"
               />
@@ -172,7 +222,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <Label htmlFor="dimensions">Dimensiones</Label>
               <Input
                 id="dimensions"
-                value={formData.dimensions}
+                value={formData.dimensions ?? ""}
                 onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
                 placeholder="25 cm x 15 cm"
               />
@@ -182,7 +232,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <Label htmlFor="weight">Peso</Label>
               <Input
                 id="weight"
-                value={formData.weight}
+                value={formData.weight ?? ""}
                 onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                 placeholder="2.5 kg"
               />
