@@ -1,17 +1,11 @@
 import { Calendar, MapPin, Ruler, Weight, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import type { MuseumItem } from "@/lib/mock-data"
+import type { MuseumItem } from "@/lib/api-client"
+
 
 interface ItemMetadataProps {
   item: MuseumItem
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  fossil: "Fósil",
-  mineral: "Mineral",
-  specimen: "Espécimen",
-  artifact: "Artefacto",
 }
 
 export function ItemMetadata({ item }: ItemMetadataProps) {
@@ -24,7 +18,7 @@ export function ItemMetadata({ item }: ItemMetadataProps) {
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-2">Categoría</p>
           <Badge variant="secondary" className="text-sm">
-            {CATEGORY_LABELS[item.category]}
+            {item.category_label}
           </Badge>
         </div>
 

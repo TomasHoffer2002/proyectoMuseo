@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { MuseumItem } from "@/lib/mock-data"
+import type { MuseumItem } from "@/lib/api-client"
 
 interface ItemNavigationProps {
   currentItem: MuseumItem
