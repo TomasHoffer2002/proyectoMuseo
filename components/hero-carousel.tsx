@@ -32,7 +32,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
     setCurrentIndex((prev) => (prev + 1) % items.length)
   }
 
-  // 4. Asegurarse de que currentItem exista antes de renderizar
+  // Asegurarse de que currentItem exista antes de renderizar
   if (items.length === 0) {
     return (
       <div className="relative h-[500px] md:h-[600px] w-full overflow-hidden bg-muted flex items-center justify-center">

@@ -50,10 +50,12 @@ export function SiteHeader() {
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">{user.nombre}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Salir
-              </Button>
+              <Link href="/">
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Salir
+                </Button>
+              </Link>
             </>
           ) : (
             <Link href="/login">

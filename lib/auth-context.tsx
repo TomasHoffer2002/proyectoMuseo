@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     localStorage.removeItem("museo_token")
     localStorage.removeItem("museo_user")
-    window.location.href = '/login';
   }
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>
