@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header"
 import { AdminGuard } from "@/components/admin-guard"
 import { ItemsTable } from "@/components/items-table"
 import { ItemForm } from "@/components/item-form"
-//import { CommentsModerationTable } from "@/components/comments-moderation-table"
+import { CommentsModerationTable } from "@/components/comments-moderation-table"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
@@ -14,27 +14,33 @@ import { useToast } from "@/hooks/use-toast"
 import { 
   type MuseumItem, 
   type Category,
-  // type Comment,
+  type AdminComment,
   API_ITEMS_URL,
   API_CATEGORIES_URL,
   API_CREATE_ITEM_URL,
   API_UPDATE_ITEM_URL,
-  API_DELETE_ITEM_URL
+  API_DELETE_ITEM_URL,
+  API_GET_COMMENTS_URL, 
+  API_UPDATE_COMMENT_STATUS_URL, 
+  API_DELETE_COMMENT_URL 
 } from "@/lib/api-client"
 
 export default function AdminPage() {
+  // estados para items
   const [items, setItems] = useState<MuseumItem[]>([])
-  //const [comments, setComments] = useState<Comment[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [editingItem, setEditingItem] = useState<MuseumItem | null>(null)
   const [showForm, setShowForm] = useState(false)
+  // estados para comentarios
+  const [comments, setComments] = useState<AdminComment[]>([])
+  const [commentStatusFilter, setCommentStatusFilter] = useState("todos") // Estado para el filtro
+  // estados generales
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  // función para cargar datos de la API
-  const fetchData = async () => {
+  // Función para cargar Items y Categorías
+  const fetchItemsAndCategories = async () => {
     try {
-      setIsLoading(true)
       const [itemsRes, categoriesRes] = await Promise.all([
         fetch(API_ITEMS_URL),
         fetch(API_CATEGORIES_URL)
@@ -44,15 +50,41 @@ export default function AdminPage() {
       setItems(itemsData);
       setCategories(categoriesData);
     } catch (error) {
-      toast({ title: "Error", description: "No se pudieron cargar los datos de la API.", variant: "destructive" })
-    } finally {
-      setIsLoading(false)
+      toast({ title: "Error", description: "No se pudieron cargar los ítems o categorías.", variant: "destructive" })
     }
   }
 
+  // Función para cargar Comentarios (basado en el filtro)
+  const fetchComments = async () => {
+    try {
+      const response = await fetch(`${API_GET_COMMENTS_URL}?estado=${commentStatusFilter}`)
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.mensaje || "Error al cargar comentarios");
+      setComments(data);
+    } catch (error) {
+       toast({ title: "Error", description: (error as Error).message, variant: "destructive" })
+    }
+  }
+
+  // Carga inicial de todos los datos
   useEffect(() => {
-    fetchData()
-  }, [])
+    const fetchAllData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        fetchItemsAndCategories(),
+        fetchComments() // Carga inicial (filtro 'todos')
+      ]);
+      setIsLoading(false);
+    }
+    fetchAllData();
+  }, []) 
+
+  // Refrescar comentarios CADA VEZ que el filtro cambie
+  useEffect(() => {
+    if (!isLoading) { // Evita la recarga inicial doble
+      fetchComments();
+    }
+  }, [commentStatusFilter]) // Dependencia: el filtro
 
   const handleCreateOrUpdate = async (data: Partial<MuseumItem>) => {
     const url = editingItem ? API_UPDATE_ITEM_URL : API_CREATE_ITEM_URL;
@@ -78,8 +110,7 @@ export default function AdminPage() {
 
       setShowForm(false);
       setEditingItem(null);
-      fetchData(); // Recarga la lista de ítems
-    
+      fetchItemsAndCategories(); // Recarga la lista de ítems
     } catch (error) {
       toast({
         title: "Error",
@@ -88,12 +119,12 @@ export default function AdminPage() {
       });
     }
   }
-  const handleEdit = (item: MuseumItem) => {
+  const handleEditItem = (item: MuseumItem) => {
     setEditingItem(item)
     setShowForm(true)
   }
 
-  const handleDelete = async (id: number) => { 
+  const handleDeleteItem = async (id: number) => { 
     try {
       const response = await fetch(API_DELETE_ITEM_URL, {
         method: "POST",
@@ -113,7 +144,7 @@ export default function AdminPage() {
         variant: "destructive",
       });
 
-      fetchData(); // recarga la lista de ítems
+      fetchItemsAndCategories(); // recarga la lista de ítems
     
     } catch (error) {
       toast({
@@ -124,35 +155,60 @@ export default function AdminPage() {
     }
   }
 
-  const handleCancel = () => {
+  const handleCancelForm = () => {
     setShowForm(false)
     setEditingItem(null)
   }
 
-  /* Logica de comentarios comentada por ahora
-  const handleApproveComment = (id: string) => {
-    setComments((prev) =>
-      prev.map((comment) => (comment.id === id ? { ...comment, status: "approved" as const } : comment)),
-    )
-    toast({
-      title: "Comentario aprobado",
-      description: "El comentario ahora es visible públicamente.",
-    })
+  const handleUpdateCommentStatus = async (id: number, nuevo_estado: "aprobado" | "rechazado") => {
+    try {
+       const response = await fetch(API_UPDATE_COMMENT_STATUS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, nuevo_estado }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.mensaje);
+      
+      toast({ title: nuevo_estado === 'aprobado' ? "Comentario Aprobado" : "Comentario Rechazado" });
+      fetchComments(); // Recargar la lista de comentarios
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
   }
 
-  const handleRejectComment = (id: string) => {
-    setComments((prev) =>
-      prev.map((comment) => (comment.id === id ? { ...comment, status: "rejected" as const } : comment)),
-    )
-    toast({
-      title: "Comentario rechazado",
-      description: "El comentario ha sido rechazado y no será visible.",
-      variant: "destructive",
-    })
+  const handleDeleteComment = async (id: number) => {
+    try {
+       const response = await fetch(API_DELETE_COMMENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.mensaje);
+      
+      toast({ title: "Comentario Eliminado", variant: "destructive" });
+      fetchComments(); // Recargar la lista de comentarios
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
   }
 
-  const pendingCommentsCount = comments.filter((c) => c.status === "pending").length
-  */
+  const pendingCommentsCount = comments.filter((c) => c.estado === "pendiente").length
+
+  if (isLoading) {
+    return (
+      <AdminGuard>
+        <div className="min-h-screen bg-background">
+          <SiteHeader />
+          <main className="container mx-auto px-4 py-8 text-center">
+            <p>Cargando datos de administración...</p>
+          </main>
+        </div>
+      </AdminGuard>
+    )
+  }
+  
   return (
     <AdminGuard>
       <div className="min-h-screen bg-background">
@@ -167,7 +223,7 @@ export default function AdminPage() {
           <Tabs defaultValue="items" className="space-y-6">
             <TabsList>
               <TabsTrigger value="items">Elementos del Catálogo</TabsTrigger>
-              {/*
+              
               <TabsTrigger value="comments" className="relative">
                 Moderación de Comentarios
                 {pendingCommentsCount > 0 && (
@@ -176,7 +232,7 @@ export default function AdminPage() {
                   </span>
                 )}
               </TabsTrigger>
-              */}
+              
             </TabsList>
 
             <TabsContent value="items" className="space-y-6">
@@ -184,7 +240,7 @@ export default function AdminPage() {
                 <ItemForm 
                   item={editingItem || undefined} 
                   onSubmit={handleCreateOrUpdate} 
-                  onCancel={handleCancel}
+                  onCancel={handleCancelForm}
                   categories={categories}
                 />
               ) : (
@@ -200,20 +256,22 @@ export default function AdminPage() {
                     </Button>
                   </div>
 
-                  <ItemsTable items={items} onEdit={handleEdit} onDelete={handleDelete} />
+                  <ItemsTable items={items} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 </>
               )}
             </TabsContent>
-            {/*
+            
             <TabsContent value="comments">
               <CommentsModerationTable
                 comments={comments}
-                items={items}
-                onApprove={handleApproveComment}
-                onReject={handleRejectComment}
+                currentFilter={commentStatusFilter}
+                onFilterChange={setCommentStatusFilter}
+                onApprove={(id) => handleUpdateCommentStatus(id, "aprobado")}
+                onReject={(id) => handleUpdateCommentStatus(id, "rechazado")}
+                onDelete={handleDeleteComment}
               />
             </TabsContent>
-            */}
+            
           </Tabs>
         </main>
       </div>
