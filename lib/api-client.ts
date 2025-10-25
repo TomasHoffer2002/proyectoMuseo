@@ -17,6 +17,8 @@ export const API_CREATE_COMMENT_URL = "http://localhost:8012/apiLogin/crear_come
 export const API_UPDATE_COMMENT_STATUS_URL = "http://localhost:8012/apiLogin/modificar_estado_comentario.php";
 export const API_DELETE_COMMENT_URL = "http://localhost:8012/apiLogin/eliminar_comentario.php";
 export const API_GET_PUBLIC_COMMENTS_URL = "http://localhost:8012/apiLogin/obtener_comentarios_publicos.php";
+export const API_TOGGLE_FEATURED_URL = "http://localhost:8012/apiLogin/modificar_destacado.php";
+
 
 export interface Category {
   value: string;

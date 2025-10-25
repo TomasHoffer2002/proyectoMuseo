@@ -22,7 +22,8 @@ import {
   API_DELETE_ITEM_URL,
   API_GET_COMMENTS_URL, 
   API_UPDATE_COMMENT_STATUS_URL, 
-  API_DELETE_COMMENT_URL 
+  API_DELETE_COMMENT_URL,
+  API_TOGGLE_FEATURED_URL 
 } from "@/lib/api-client"
 
 export default function AdminPage() {
@@ -85,6 +86,34 @@ export default function AdminPage() {
       fetchComments();
     }
   }, [commentStatusFilter]) // Dependencia: el filtro
+  //funcion para marcar o desmarcar destacado
+  const handleToggleFeatured = async (item: MuseumItem) => {
+    const newFeaturedStatus = !item.featured;
+
+    try {
+      const response = await fetch(API_TOGGLE_FEATURED_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          id: item.id, 
+          featured: newFeaturedStatus 
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.mensaje || "Error al cambiar estado destacado.");
+
+      toast({
+        title: "Estado Destacado Cambiado",
+        description: `El item "${item.title}" ${newFeaturedStatus ? 'ahora está destacado.' : 'ya no está destacado.'}`,
+      });
+      
+      fetchItemsAndCategories(); 
+
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
+  }
 
   const handleCreateOrUpdate = async (data: Partial<MuseumItem>) => {
     const url = editingItem ? API_UPDATE_ITEM_URL : API_CREATE_ITEM_URL;
@@ -256,7 +285,12 @@ export default function AdminPage() {
                     </Button>
                   </div>
 
-                  <ItemsTable items={items} onEdit={handleEditItem} onDelete={handleDeleteItem} />
+                  <ItemsTable 
+                    items={items} 
+                    onEdit={handleEditItem} 
+                    onDelete={handleDeleteItem} 
+                    onToggleFeatured={handleToggleFeatured}
+                  />
                 </>
               )}
             </TabsContent>
