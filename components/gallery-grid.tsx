@@ -15,7 +15,7 @@ export function GalleryGrid({ items }: GalleryGridProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {items.map((item) => (
         <Link key={item.id} href={`/item/${item.id}`}>
-          <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
+          <Card className="group overflow-hidden hover:shadow-lg transition-shadow pt-0">
             <div className="relative aspect-[4/3] overflow-hidden bg-muted">
               <Image
                 src={item.imageUrl ? `${API_SERVER_URL}${item.imageUrl}` : "/placeholder.svg"}

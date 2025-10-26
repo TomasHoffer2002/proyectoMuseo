@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Edit, Eye, Trash2 } from "lucide-react"
+import { Edit, Eye, Trash2, Star } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -22,9 +22,10 @@ interface ItemsTableProps {
   items: MuseumItem[]
   onEdit: (item: MuseumItem) => void
   onDelete: (id: number) => void
+  onToggleFeatured: (item: MuseumItem) => void
 }
 
-export function ItemsTable({ items, onEdit, onDelete }: ItemsTableProps) {
+export function ItemsTable({ items, onEdit, onDelete, onToggleFeatured }: ItemsTableProps) {
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const handleDelete = () => {
@@ -73,6 +74,15 @@ export function ItemsTable({ items, onEdit, onDelete }: ItemsTableProps) {
                           <span className="sr-only">Ver</span>
                         </Button>
                       </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onToggleFeatured(item)} // Llama a la función pasada por props
+                        title={item.featured ? "Quitar de destacados" : "Añadir a destacados"}
+                      >
+                        <Star className="h-4 w-4 text-muted-foreground" /> 
+                        <span className="sr-only">Destacar/Quitar destacado</span>
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
