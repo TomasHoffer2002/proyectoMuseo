@@ -6,8 +6,8 @@ import { ItemMetadata } from "@/components/item-metadata"
 import { CommentsSection } from "@/components/comments-section" 
 import { ItemNavigation } from "@/components/item-navigation"
 import { Viewer3DPlaceholder } from "@/components/viewer-3d-placeholder"
-import { API_ITEM_DETAIL_URL, API_GET_PUBLIC_COMMENTS_URL, type MuseumItem, type PublicComment } from "@/lib/api-client"
-import { initDB } from '@/lib/indexeddb-client';
+import { API_ITEM_DETAIL_URL, API_GET_PUBLIC_COMMENTS_URL, API_ITEMS_URL, type MuseumItem, type PublicComment } from "@/lib/api-client"
+import { initDB, getItems } from '@/lib/indexeddb-client';
 
 const ITEM_STORE = 'items';
 
@@ -85,7 +85,7 @@ async function getItemWithFallback(id: string): Promise<{ item: MuseumItem; comm
         // fallback falló
     }
 
-    // Si todo falla: aviso en consola y devolver null
+    // Si todo falla: avisar y devolver null (no hay datos disponibles)
     try {
         console.warn(`Ítem ${id} no encontrado en la caché ni en la red.`);
     } catch {}
@@ -93,11 +93,36 @@ async function getItemWithFallback(id: string): Promise<{ item: MuseumItem; comm
     return null;
 }
 
+// Función para obtener todos los items con fallback a IndexedDB
+// Devuelve la lista completa usada para navegación en ItemNavigation
+async function getAllItemsWithFallback(): Promise<MuseumItem[]> {
+    try {
+        // Intenta obtener de la red
+        const res = await fetch(API_ITEMS_URL, { cache: 'no-store' });
+        if (res.ok) {
+            const items = await res.json();
+            return Array.isArray(items) ? items : [];
+        }
+    } catch {
+        // Red falló, intenta IndexedDB
+    }
+
+    // Fallback a IndexedDB
+    try {
+        const cachedItems = await getItems();
+        return cachedItems;
+    } catch {
+        return [];
+    }
+}
+
 export function ItemDetailClient({ itemId }: { itemId: string }) {
     const [item, setItem] = useState<MuseumItem | null>(null);
     const [comments, setComments] = useState<PublicComment[]>([]);
+    const [allItems, setAllItems] = useState<MuseumItem[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Cargar detalle del ítem (intenta red, luego IndexedDB)
     useEffect(() => {
         getItemWithFallback(itemId)
             .then(data => {
@@ -115,6 +140,11 @@ export function ItemDetailClient({ itemId }: { itemId: string }) {
             .finally(() => setLoading(false));
     }, [itemId]);
 
+    // Cargar la lista completa de items (para la navegación anterior/siguiente)
+    useEffect(() => {
+        getAllItemsWithFallback().then(items => setAllItems(items));
+    }, []);
+
 
     if (loading) {
         return <div className="p-8 text-center">Cargando detalles del ítem...</div>;
@@ -125,8 +155,6 @@ export function ItemDetailClient({ itemId }: { itemId: string }) {
             Error: No se pudieron cargar los datos del ítem. Es posible que no tengas conexión y el ítem no esté guardado localmente.
         </div>; 
     }
-    
-    const allItems: MuseumItem[] = []; // Navegación sin ítems si no hay red
 
     return (
         <>
