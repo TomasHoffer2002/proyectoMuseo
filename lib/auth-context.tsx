@@ -19,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const API_URL = "http://localhost:8012/apiLogin/login.php";
+const API_URL = "http://localhost/apiLogin/login.php";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Error de red o al conectar con la API:", error);
-      return null;
+      throw error; // Re-lanza el error para que el componente que llama pueda manejarlo
     }
   }
 

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useOnlineStatus } from '@/hooks/use-online-status';
 import { type PublicComment, API_CREATE_COMMENT_URL } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 
@@ -21,6 +22,7 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({ itemId, comments }: CommentsSectionProps) {
+  const isOnline = useOnlineStatus();
   const [content, setContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -32,6 +34,11 @@ export function CommentsSection({ itemId, comments }: CommentsSectionProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    if (!isOnline) {
+      setShowError("No hay conexión a internet. Tu comentario no pudo enviarse.")
+      setIsSubmitting(false)
+      return
+    }
     // Chequeo de seguridad: si no hay usuario, no hacer nada
     if (!user) {
       setShowError("Debes iniciar sesión para poder comentar.");
@@ -80,6 +87,13 @@ export function CommentsSection({ itemId, comments }: CommentsSectionProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {!isOnline && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Sin conexión a internet — los comentarios no se cargarán ni podrán enviarse.
+            </AlertDescription>
+          </Alert>
+        )}
         {approvedComments.length > 0 ? (
           <div className="space-y-4">
             {approvedComments.map((comment) => (

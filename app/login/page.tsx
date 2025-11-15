@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useOnlineStatus } from "@/hooks/use-online-status" // Importar el hook
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -17,26 +18,45 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
+  const isOnline = useOnlineStatus() // Usar el hook para obtener el estado de la conexión
+
+  useEffect(() => {
+    if (!isOnline) {
+      setError("Sin conexión a Internet. No es posible iniciar sesión.")
+    } else {
+      setError("") // Limpiar el error si vuelve a estar en línea
+    }
+  }, [isOnline])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!isOnline) {
+      setError("Sin conexión a Internet. Por favor, conéctese para iniciar sesión.")
+      return
+    }
+
     setError("")
     setIsLoading(true)
 
-    const loggedInUser = await login(username, password)
+    try {
+      const loggedInUser = await login(username, password)
 
-    if (loggedInUser) {
-      // Si el login fue exitoso, se comprueba el rol
-      if (loggedInUser.rol === 'admin') {
-        router.push("/admin") // Redirigir a la página de admin
+      if (loggedInUser) {
+        if (loggedInUser.rol === 'admin') {
+          router.push("/admin")
+        } else {
+          router.push("/")
+        }
       } else {
-        router.push("/") // Redirigir a la página principal para usuarios normales
+        setError("Credenciales incorrectas. Por favor, intente nuevamente.")
       }
-    } else {
-      // Si loggedInUser es null, el login falló
-      setError("Credenciales incorrectas. Por favor, intente nuevamente.")
+    } catch (err) {
+      // Este error se captura si la API no está disponible (offline)
+      setError("No se pudo conectar con el servidor. Verifique su conexión a internet.")
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   return (
@@ -53,6 +73,13 @@ export default function LoginPage() {
             <CardDescription>Ingrese sus credenciales para acceder al sistema</CardDescription>
           </CardHeader>
           <CardContent>
+            {!isOnline && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>
+                  Estás desconectado. Por favor, revisa tu conexión a internet.
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Nombre de Usuario</Label>
@@ -63,7 +90,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || !isOnline} // Deshabilitar si está cargando o no hay conexión
                 />
               </div>
 
@@ -76,7 +103,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || !isOnline} // Deshabilitar si está cargando o no hay conexión
                 />
               </div>
 
@@ -86,7 +113,7 @@ export default function LoginPage() {
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !isOnline}>
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>

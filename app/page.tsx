@@ -11,6 +11,7 @@ import {
   type MuseumItem,
   type Category
 } from "@/lib/api-client"
+import { saveItems, getItems, saveCategories, getCategories } from "@/lib/indexeddb-client";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -22,26 +23,55 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // useEffect para llamar a la API
+  // useEffect para llamar a la API con fallback a IndexedDB
   useEffect(() => {
     const fetchItems = async () => {
+      setIsLoading(true);
       try {
+        // Intenta obtener los datos de la red
         const [itemsRes, categoriesRes] = await Promise.all([
           fetch(API_ITEMS_URL),
           fetch(API_CATEGORIES_URL)
         ]);
 
         if (!itemsRes.ok || !categoriesRes.ok) {
+          // Si la red falla, lanza un error para que el catch lo maneje
           throw new Error("Error al cargar los datos de la API");
         }
 
         const itemsData = await itemsRes.json();
         const categoriesData = await categoriesRes.json();
         
+        // Guarda los datos en el estado
         setAllItems(itemsData);
         setCategories(categoriesData);
+        
+        // Y también en IndexedDB para uso offline
+        await saveItems(itemsData);
+        await saveCategories(categoriesData);
+        
+        setError(null); // Limpia cualquier error anterior
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Un error desconocido ocurrió");
+        // Si la red falla, intenta cargar desde IndexedDB
+        console.warn("Fallo al obtener datos de la red, intentando desde IndexedDB...");
+        try {
+          const [cachedItems, cachedCategories] = await Promise.all([
+            getItems(),
+            getCategories()
+          ]);
+
+          if (cachedItems.length > 0) {
+            setAllItems(cachedItems);
+            setCategories(cachedCategories);
+            setError(null); // Hay datos cacheados, no es un error
+          } else {
+            // Si no hay nada en cache, entonces sí es un error
+            setError("No se pudieron cargar los datos. Revisa tu conexión a internet.");
+          }
+        } catch (dbError) {
+          console.error("Error al leer de IndexedDB:", dbError);
+          setError("Ocurrió un error crítico al intentar acceder a los datos locales.");
+        }
       } finally {
         setIsLoading(false);
       }

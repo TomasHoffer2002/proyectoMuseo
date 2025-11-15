@@ -1,39 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { API_SERVER_URL } from "@/lib/api-client"
+import { useCachedImage } from '@/hooks/use-cached-image';
 
 interface ImageGalleryProps {
-  images: string[]
-  title: string
+    images: string[]
+    title: string
 }
 
 export function ImageGallery({ images, title }: ImageGalleryProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
-  }
+    // 1. Construir las URLs completas (incluyendo la base del servidor)
+    const fullUrls = useMemo(() => {
+        // Mapea las rutas relativas a URLs completas para que el hook las gestione
+        return images.map(imagePath => `${API_SERVER_URL}${imagePath}`);
+    }, [images]);
+    
+    // 2. Usar un hook que gestione el caché de la IMAGEN ACTUAL.
+    //    Si la imagen no está disponible, el hook devuelve el placeholder.
+    const currentImageUrl = fullUrls[currentIndex] || "/placeholder.svg";
+    const currentSrc = useCachedImage(currentImageUrl);
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length)
-  }
 
+    const goToPrevious = () => {
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
+    }
+
+    const goToNext = () => {
+        setCurrentIndex((prev) => (prev + 1) % images.length)
+    }
+    
+    // --- Lógica de renderizado ---
+
+    // La URL de origen para el placeholder o la imagen no encontrada
+    const placeholderSrc = "/placeholder.svg";
   return (
     <>
       <div className="space-y-4">
+        {/* -------------------- IMAGEN PRINCIPAL -------------------- */}
         <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden group">
           <Image
-            src={images[currentIndex] ? `${API_SERVER_URL}${images[currentIndex]}` : "/placeholder.svg"}
-            alt={`${title} - Imagen ${currentIndex + 1}`}
-            fill
-            className="object-cover"
-          />
+                        // 'currentSrc' QUE VIENE DEL HOOK GESTOR DE CACHÉ/INDEXEDDB, ya no se pone la img directamente
+                        src={currentSrc === placeholderSrc ? placeholderSrc : currentSrc} 
+                        alt={`${title} - Imagen ${currentIndex + 1}`}
+                        fill
+                        unoptimized={currentSrc.startsWith('blob:')} 
+                        className="object-cover"
+                    />
 
           {images.length > 1 && (
             <>
@@ -42,6 +62,8 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                 size="icon"
                 className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={goToPrevious}
+                aria-label="Imagen anterior"
+                title="Imagen anterior"
               >
                 <ChevronLeft className="h-6 w-6" />
                 <span className="sr-only">Imagen anterior</span>
@@ -52,6 +74,8 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                 size="icon"
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={goToNext}
+                aria-label="Siguiente imagen"
+                title="Siguiente imagen"
               >
                 <ChevronRight className="h-6 w-6" />
                 <span className="sr-only">Siguiente imagen</span>
@@ -64,6 +88,8 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
             size="icon"
             className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => setIsFullscreen(true)}
+            aria-label="Ver en pantalla completa"
+            title="Ver en pantalla completa"
           >
             <Maximize2 className="h-5 w-5" />
             <span className="sr-only">Ver en pantalla completa</span>
@@ -76,38 +102,47 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
           )}
         </div>
 
-        {images.length > 1 && (
-          <div className="grid grid-cols-4 gap-2">
-            {images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                  index === currentIndex ? "border-primary" : "border-transparent hover:border-muted-foreground/50"
-                }`}
-              >
-                <Image
-                  src={image ? `${API_SERVER_URL}${image}` : "/placeholder.svg"}
-                  alt={`${title} - Miniatura ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
+                {images.length > 1 && (
+                    <div className="grid grid-cols-4 gap-2">
+                        {images.map((imagePath, index) => {
+                            const thumbUrl = `${API_SERVER_URL}${imagePath}`;
+                            const thumbSrc = useCachedImage(thumbUrl); 
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentIndex(index)}
+                                aria-label={`Miniatura ${index + 1} de ${title}`}
+                                title={`Miniatura ${index + 1} de ${title}`}
+                                className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                                index === currentIndex ? "border-primary" : "border-transparent hover:border-muted-foreground/50"
+                                }`}
+                              >
+                                <Image
+                                  src={thumbSrc === placeholderSrc ? placeholderSrc : thumbSrc}
+                                  alt={`${title} - Miniatura ${index + 1}`}
+                                  fill
+                                  unoptimized={thumbSrc.startsWith('blob:')}
+                                  className="object-cover"
+                                />
+                              </button>
+                            )
+                        })}
+                    </div>
+                )}
       </div>
 
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
           <div className="relative w-full h-full">
             <Image
-              src={images[currentIndex] ? `${API_SERVER_URL}${images[currentIndex]}` : "/placeholder.svg"}
-              alt={`${title} - Imagen ${currentIndex + 1}`}
-              fill
-              className="object-contain"
+                // también usamos 'currentSrc'
+                src={currentSrc === placeholderSrc ? placeholderSrc : currentSrc}
+                alt={`${title} - Imagen ${currentIndex + 1}`}
+                fill
+                unoptimized={currentSrc.startsWith('blob:')} 
+                className="object-contain"
             />
-
             {images.length > 1 && (
               <>
                 <Button
