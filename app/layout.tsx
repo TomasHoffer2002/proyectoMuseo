@@ -1,30 +1,30 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { AuthProvider } from "@/lib/auth-context"
+import ClientProviders from "./ClientProviders" // Importa el nuevo componente
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Museo de Ciencias Naturales - Catálogo Digital",
-  description: "Catálogo digital del Museo de Ciencias Naturales",
-  generator: "v0.app",
+    title: "Museo de Ciencias Naturales - Catálogo Digital",
+    description: "Catálogo digital del Museo de Ciencias Naturales",
+    generator: "v0.app",
 }
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode
+    children: React.ReactNode
 }>) {
-  return (
-    <html lang="es">
-      <body className={`font-sans antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
-        <Analytics />
-      </body>
-    </html>
-  )
+    return (
+        <html lang="es">
+            <body className={`${_geist.className} ${_geistMono.className} font-sans antialiased`}>
+                <ClientProviders>
+                    {children}
+                </ClientProviders>
+            </body>
+        </html>
+    )
 }

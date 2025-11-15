@@ -10,6 +10,8 @@ import { CommentsModerationTable } from "@/components/comments-moderation-table"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
+import { useOnlineStatus } from '@/hooks/use-online-status'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 import { 
   type MuseumItem, 
@@ -27,6 +29,7 @@ import {
 } from "@/lib/api-client"
 
 export default function AdminPage() {
+  const isOnline = useOnlineStatus()
   // estados para items
   const [items, setItems] = useState<MuseumItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -41,6 +44,10 @@ export default function AdminPage() {
 
   // Función para cargar Items y Categorías
   const fetchItemsAndCategories = async () => {
+    if (!isOnline) {
+      toast({ title: "Sin conexión", description: "No hay conexión a internet. No se pueden cargar ítems ni categorías.", variant: "destructive" })
+      return
+    }
     try {
       const [itemsRes, categoriesRes] = await Promise.all([
         fetch(API_ITEMS_URL),
@@ -57,6 +64,10 @@ export default function AdminPage() {
 
   // Función para cargar Comentarios (basado en el filtro)
   const fetchComments = async () => {
+    if (!isOnline) {
+      toast({ title: "Sin conexión", description: "No hay conexión a internet. Los comentarios no se pueden cargar.", variant: "destructive" })
+      return
+    }
     try {
       const response = await fetch(`${API_GET_COMMENTS_URL}?estado=${commentStatusFilter}`)
       const data = await response.json();
@@ -244,6 +255,13 @@ export default function AdminPage() {
         <SiteHeader />
 
         <main className="container mx-auto px-4 py-8">
+          {!isOnline && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>
+                Sin conexión a internet — algunas funciones del panel (p. ej. carga de comentarios) no estarán disponibles.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Panel de Administración</h1>
             <p className="text-muted-foreground">Gestiona el catálogo del museo y modera comentarios</p>
