@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
+import { ChevronLeft, ChevronRight} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { API_SERVER_URL } from "@/lib/api-client"
@@ -17,14 +17,14 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isFullscreen, setIsFullscreen] = useState(false)
 
-    // 1. Construir las URLs completas (incluyendo la base del servidor)
+    // Construir las URLs completas de las imágenes
     const fullUrls = useMemo(() => {
         // Mapea las rutas relativas a URLs completas para que el hook las gestione
         return images.map(imagePath => `${API_SERVER_URL}${imagePath}`);
     }, [images]);
     
-    // 2. Usar un hook que gestione el caché de la IMAGEN ACTUAL.
-    //    Si la imagen no está disponible, el hook devuelve el placeholder.
+    // Usar un hook que gestione el caché de la IMAGEN ACTUAL.
+    // Si la imagen no está disponible, el hook devuelve el placeholder. Que es una imagen default.
     const currentImageUrl = fullUrls[currentIndex] || "/placeholder.svg";
     const currentSrc = useCachedImage(currentImageUrl);
 
@@ -47,7 +47,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
         {/* -------------------- IMAGEN PRINCIPAL -------------------- */}
         <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden group">
           <Image
-                        // 'currentSrc' QUE VIENE DEL HOOK GESTOR DE CACHÉ/INDEXEDDB, ya no se pone la img directamente
+                        // 'currentSrc' QUE VIENE DEL HOOK GESTOR DE CACHÉ/INDEXEDDB
                         src={currentSrc === placeholderSrc ? placeholderSrc : currentSrc} 
                         alt={`${title} - Imagen ${currentIndex + 1}`}
                         fill
@@ -83,17 +83,6 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
             </>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => setIsFullscreen(true)}
-            aria-label="Ver en pantalla completa"
-            title="Ver en pantalla completa"
-          >
-            <Maximize2 className="h-5 w-5" />
-            <span className="sr-only">Ver en pantalla completa</span>
-          </Button>
 
           {images.length > 1 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">

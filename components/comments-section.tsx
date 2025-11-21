@@ -72,7 +72,14 @@ export function CommentsSection({ itemId, comments }: CommentsSectionProps) {
       setTimeout(() => setShowSuccess(false), 5000)
 
     } catch (error) {
-      setShowError((error as Error).message);
+      const errorMessage = (error as Error).message;
+
+      if (errorMessage === "Failed to fetch" || errorMessage.includes("NetworkError")) {
+        setShowError("Debe tener conexión para comentar");
+      } else {
+        // Otro tipo de error (ej: validación del servidor)
+        setShowError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false)
     }

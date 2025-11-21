@@ -21,7 +21,7 @@ interface ItemDetailResponse {
 async function getItemWithFallback(id: string): Promise<{ item: MuseumItem; comments: PublicComment[] } | null> {
     const db = await initDB();
     
-    // 1) Intento de carga por red (servidor)
+    // Intento de carga por red (servidor)
     try {
         const res = await fetch(`${API_ITEM_DETAIL_URL}?id=${id}`, { cache: 'no-store' });
         if (res.ok) {
@@ -71,7 +71,7 @@ async function getItemWithFallback(id: string): Promise<{ item: MuseumItem; comm
         // red falló, seguimos a fallback
     }
 
-    // 2) Fallback a IndexedDB: buscar por clave numérica, luego por string
+    // Fallback a IndexedDB: buscar por clave numérica, luego por string
     try {
         const numericKey = Number(id);
         if (!Number.isNaN(numericKey)) {

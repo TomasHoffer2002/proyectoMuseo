@@ -1,23 +1,23 @@
 // Definimos la URL del servidor Apache
-export const API_SERVER_URL = "http://localhost";
+export const API_SERVER_URL = "http://localhost:8012";
 
 // URL de la API de ítems
-export const API_ITEMS_URL = "http://localhost/apiLogin/obtenerItems.php";
+export const API_ITEMS_URL = "http://localhost:8012/apiLogin/obtenerItems.php";
 // URL de la API para obtener detalles de un ítem específico
-export const API_ITEM_DETAIL_URL = "http://localhost/apiLogin/obtenerItemsDetalle.php";
+export const API_ITEM_DETAIL_URL = "http://localhost:8012/apiLogin/obtenerItemsDetalle.php";
 // URL de la API para obtener categorías
-export const API_CATEGORIES_URL = "http://localhost/apiLogin/obtenerCategorias.php";
+export const API_CATEGORIES_URL = "http://localhost:8012/apiLogin/obtenerCategorias.php";
 // URL de la API para la ABM de items
-export const API_CREATE_ITEM_URL = "http://localhost/apiLogin/crear_item.php";
-export const API_UPDATE_ITEM_URL = "http://localhost/apiLogin/modificar_item.php";
-export const API_DELETE_ITEM_URL = "http://localhost/apiLogin/eliminar_item.php";
+export const API_CREATE_ITEM_URL = "http://localhost:8012/apiLogin/crear_item.php";
+export const API_UPDATE_ITEM_URL = "http://localhost:8012/apiLogin/modificar_item.php";
+export const API_DELETE_ITEM_URL = "http://localhost:8012/apiLogin/eliminar_item.php";
 // URL de la API para la gestión de comentarios
-export const API_GET_COMMENTS_URL = "http://localhost/apiLogin/obtener_comentarios.php";
-export const API_CREATE_COMMENT_URL = "http://localhost/apiLogin/crear_comentario.php";
-export const API_UPDATE_COMMENT_STATUS_URL = "http://localhost/apiLogin/modificar_estado_comentario.php";
-export const API_DELETE_COMMENT_URL = "http://localhost/apiLogin/eliminar_comentario.php";
-export const API_GET_PUBLIC_COMMENTS_URL = "http://localhost/apiLogin/obtener_comentarios_publicos.php";
-export const API_TOGGLE_FEATURED_URL = "http://localhost/apiLogin/modificar_destacado.php";
+export const API_GET_COMMENTS_URL = "http://localhost:8012/apiLogin/obtener_comentarios.php";
+export const API_CREATE_COMMENT_URL = "http://localhost:8012/apiLogin/crear_comentario.php";
+export const API_UPDATE_COMMENT_STATUS_URL = "http://localhost:8012/apiLogin/modificar_estado_comentario.php";
+export const API_DELETE_COMMENT_URL = "http://localhost:8012/apiLogin/eliminar_comentario.php";
+export const API_GET_PUBLIC_COMMENTS_URL = "http://localhost:8012/apiLogin/obtener_comentarios_publicos.php";
+export const API_TOGGLE_FEATURED_URL = "http://localhost:8012/apiLogin/modificar_destacado.php";
 
 
 export interface Category {

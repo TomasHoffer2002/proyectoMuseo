@@ -3,13 +3,14 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image" 
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useOnlineStatus } from "@/hooks/use-online-status" // Importar el hook
+import { useOnlineStatus } from "@/hooks/use-online-status"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -18,13 +19,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
-  const isOnline = useOnlineStatus() // Usar el hook para obtener el estado de la conexión
+  const isOnline = useOnlineStatus()
 
   useEffect(() => {
     if (!isOnline) {
       setError("Sin conexión a Internet. No es posible iniciar sesión.")
     } else {
-      setError("") // Limpiar el error si vuelve a estar en línea
+      setError("")
     }
   }, [isOnline])
 
@@ -52,7 +53,6 @@ export default function LoginPage() {
         setError("Credenciales incorrectas. Por favor, intente nuevamente.")
       }
     } catch (err) {
-      // Este error se captura si la API no está disponible (offline)
       setError("No se pudo conectar con el servidor. Verifique su conexión a internet.")
     } finally {
       setIsLoading(false)
@@ -60,14 +60,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center relative p-4">
+      
+      {/* Imagen de fondo */}
+      <Image
+        src="http://localhost:8012/apiLogin/imagenes/login.jpg"
+        alt="Fondo del Museo"
+        fill
+        className="object-cover -z-20" // Se envía al fondo absoluto
+        priority // Carga prioritaria
+      />
+      
+      {/* Capa oscura (Overlay) para mejorar lectura */}
+      <div className="absolute inset-0 bg-black/50 -z-10" />
+
+      <div className="w-full max-w-md z-10"> {/* z-10 para asegurar que esté encima */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Museo de Ciencias Naturales</h1>
-          <p className="text-muted-foreground">Catálogo Digital</p>
+          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-md">
+            Museo de Ciencias Naturales
+          </h1>
+          <p className="text-gray-200 drop-shadow-sm">Catálogo Digital</p>
         </div>
 
-        <Card>
+        {/* Tarjeta de login */}
+        <Card className="bg-card/95 backdrop-blur-sm border-none shadow-xl">
           <CardHeader>
             <CardTitle>Iniciar Sesión</CardTitle>
             <CardDescription>Ingrese sus credenciales para acceder al sistema</CardDescription>
@@ -90,7 +106,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  disabled={isLoading || !isOnline} // Deshabilitar si está cargando o no hay conexión
+                  disabled={isLoading || !isOnline}
                 />
               </div>
 
@@ -103,7 +119,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={isLoading || !isOnline} // Deshabilitar si está cargando o no hay conexión
+                  disabled={isLoading || !isOnline}
                 />
               </div>
 
