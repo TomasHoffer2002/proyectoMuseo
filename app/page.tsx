@@ -80,6 +80,7 @@ export default function HomePage() {
     fetchItems()
   }, []) // El array vacío [] asegura que esto se ejecute solo una vez
 
+  // aqui se filtran los items destacados y los items según búsqueda y categoría
   const featuredItems = useMemo(
     () => allItems.filter((item) => item.featured),
     [allItems] // Depende de allItems
